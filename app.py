@@ -187,10 +187,13 @@ function refreshData() {
 """
 
 
-def markdown_bold(text: str) -> str:
+def markdown_bold(text: str):
     """Convert **bold** to <strong>bold</strong>."""
     import re
-    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    from markupsafe import Markup, escape
+    escaped = str(escape(text))
+    bolded = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+    return Markup(bolded)
 
 
 def build_charts(result: dict) -> dict:
@@ -348,6 +351,7 @@ def index():
     totals = {c: sum(result["topic_dist"][c].values()) for c in result["companies"]}
 
     from jinja2 import Environment
+    from markupsafe import Markup
     env = Environment(autoescape=True)
     env.filters["markdown_bold"] = markdown_bold
     tmpl = env.from_string(HTML_TEMPLATE)
@@ -361,7 +365,7 @@ def index():
         insights=result["insights"],
         colors=COMPANY_COLORS,
         text_colors=COMPANY_TEXT_COLORS,
-        charts_json=json.dumps(charts),
+        charts_json=Markup(json.dumps(charts)),
     )
 
 
